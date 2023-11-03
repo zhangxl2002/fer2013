@@ -50,14 +50,17 @@ class ImageUploadView(APIView):
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # 将图像转换为 NumPy 矩阵
-        feature = torch.tensor(np.array(img).reshape((1,48,48)),dtype=torch.float32).to(device)
+        feature = torch.tensor(np.array(img).reshape((1,48,48)),dtype=torch.float32).to(device)/255
 
         print(device)
         model = LeNet()
         model.load_state_dict(torch.load("/home/zxl/fer2013/LeNet_2023-11-01_12-52-26_55.63"))
         model.to(device) 
-        prediction = model(feature)
-        predicted_labels = torch.argmax(prediction, dim=1)
+        model.eval()
+        with torch.no_grad():
+            prediction = model(feature)
+            print(prediction)
+            predicted_labels = torch.argmax(prediction, dim=1)[0].item()
         print(predicted_labels)
 
         return Response(predicted_labels, status=status.HTTP_200_OK)
